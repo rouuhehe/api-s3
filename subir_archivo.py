@@ -1,26 +1,33 @@
 import boto3
 import base64
 
-
-bucket_name = "baldecito-tarea"
-folder_name = "nuevacarpeta/"
-
-def upload_base_64_to_s3(s3_bucket_name, s3_file_name, base_64_str):
-    """
-    Allows for the upload of a base64 string to a s3 object, may need fleshing out down the line, returns location
-    of file in S3
-    :param s3_bucket_name: S3 bucket name to push image to
-    :param s3_file_name: File name
-    :param base_64_str: base 64 string of the image to push to S3
-    :return: Tuple of bucket_name and s3_file_name
-    """
+def lambda_handler(event, context):
     s3 = boto3.resource('s3')
-    s3.Object(s3_bucket_name, s3_file_name).put(Body=base64.b64decode(base_64_str))
-    return (s3_bucket_name, s3_file_name)
 
+    # Parámetros desde el evento
+    bucket_name = "baldecito-tarea"
+    folder_name =  "nuevacarpeta/"
+    file_name = "gatitos.png"
+    base64_str = event.get("base64_str")
 
-with open("mi_imagen.png", "rb") as img_file:
-    base64_str = base64.b64encode(img_file.read()).decode("utf-8")
+    if not base64_str:
+        return {
+            'statusCode': 400,
+            'body': "Falta el parámetro 'base64_str' con la imagen codificada."
+        }
 
-bucket, key = upload_base_64_to_s3(bucket_name, f"{folder_name}gatitos.png", base64_str)
-print(f"Imagen subida en s3://{bucket}/{key}")
+    try:
+        s3_file_name = f"{folder_name}{file_name}"
+
+        s3.Object(bucket_name, s3_file_name).put(Body=base64.b64decode(base64_str))
+
+        return {
+            'statusCode': 200,
+            'body': f"Imagen subida exitosamente en s3://{bucket_name}/{s3_file_name}"
+        }
+
+    except Exception as e:
+        return {
+            'statusCode': 500,
+            'body': f"Error subiendo imagen: {str(e)}"
+        }
