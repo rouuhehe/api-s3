@@ -8,7 +8,7 @@ BUCKET = "baldecito-tarea"
 
 def lambda_handler(event, context):
     try:
-        body = json.loads(event["body"])
+        body = event["body"]
         image_url = body["image_url"]
         file_name = body["file_name"]
         folder_name = body["folder_name"]
